@@ -201,6 +201,23 @@ def admin_ajax_new(request):
             'arg': obj_arg}
 
 
+@view_config(route_name='admin_ajax_delete',
+             renderer='json',
+             permission='admin')
+def admin_ajax_delete(request):
+    obj_str = request.matchdict['object']
+    obj_id  = request.matchdict['id']
+
+    if obj_str == 'badscan':
+        BadScan.delete_scans(obj_id)
+    else:
+        # Return an error, object type not recognized
+        request.response.status = 502
+        return request.response
+
+    return {'status': 'success'}
+
+
 @view_config(route_name='admin_ajax_connection',
              renderer='json',
              permission='admin')
@@ -312,30 +329,30 @@ def admin_index(request):
     # Walk back to the beginning of the day for all these statistics
     now = now.replace(hour=0, minute=0, second=0)
 
-    today_sales     = Purchase.total(now, None)
-    today_profit    = PurchaseLineItem.profit_on_sales(now, None)
-    today_lost      = Inventory.total(now, None)
-    today_dep       = Deposit.total(now, None)
-    today_dep_cash  = CashDeposit.total(now, None)
-    today_dep_btc   = BTCDeposit.total(now, None)
-    today_dep_cc    = CCDeposit.total(now, None)
-    today_discounts = Purchase.discounts(now, None)
-    today_fees      = Purchase.fees(now, None)
+    today_sales     = Purchase.total(start=now)
+    today_profit    = PurchaseLineItem.profit_on_sales(start=now)
+    today_lost      = Inventory.total(start=now)
+    today_dep       = Deposit.total(start=now)
+    today_dep_cash  = CashDeposit.total(start=now)
+    today_dep_btc   = BTCDeposit.total(start=now)
+    today_dep_cc    = CCDeposit.total(start=now)
+    today_discounts = Purchase.discounts(start=now)
+    today_fees      = Purchase.fees(start=now)
     today_users     = Purchase.distinct(distinct_on=Event.user_id, start=now)
     today_new_users = User.get_number_new_users(start=now)
 
     # Also get statistics for yesterday
     yesterday = now - datetime.timedelta(days=1)
 
-    yesterday_sales     = Purchase.total(yesterday, now)
-    yesterday_profit    = PurchaseLineItem.profit_on_sales(yesterday, now)
-    yesterday_lost      = Inventory.total(yesterday, now)
-    yesterday_dep       = Deposit.total(yesterday, now)
-    yesterday_dep_cash  = CashDeposit.total(yesterday, now)
-    yesterday_dep_btc   = BTCDeposit.total(yesterday, now)
-    yesterday_dep_cc    = CCDeposit.total(yesterday, now)
-    yesterday_discounts = Purchase.discounts(yesterday, now)
-    yesterday_fees      = Purchase.fees(yesterday, now)
+    yesterday_sales     = Purchase.total(start=yesterday, end=now)
+    yesterday_profit    = PurchaseLineItem.profit_on_sales(start=yesterday, end=now)
+    yesterday_lost      = Inventory.total(start=yesterday, end=now)
+    yesterday_dep       = Deposit.total(start=yesterday, end=now)
+    yesterday_dep_cash  = CashDeposit.total(start=yesterday, end=now)
+    yesterday_dep_btc   = BTCDeposit.total(start=yesterday, end=now)
+    yesterday_dep_cc    = CCDeposit.total(start=yesterday, end=now)
+    yesterday_discounts = Purchase.discounts(start=yesterday, end=now)
+    yesterday_fees      = Purchase.fees(start=yesterday, end=now)
     yesterday_users     = Purchase.distinct(distinct_on=Event.user_id, start=yesterday, end=now)
     yesterday_new_users = User.get_number_new_users(start=yesterday, end=now)
 
@@ -429,27 +446,27 @@ def admin_dashboard(request):
     # Walk back to the beginning of the day for all these statistics
     now = now.replace(hour=0, minute=0, seconds=0)
 
-    ytd_sales     = Purchase.total(now.replace(month=1,day=1), None)
-    ytd_profit    = PurchaseLineItem.profit_on_sales(now.replace(month=1,day=1), None)
-    ytd_lost      = Inventory.total(now.replace(month=1,day=1), None)
-    ytd_dep       = Deposit.total(now.replace(month=1,day=1), None)
-    ytd_dep_cash  = CashDeposit.total(now.replace(month=1,day=1), None)
-    ytd_dep_btc   = BTCDeposit.total(now.replace(month=1,day=1), None)
-    ytd_dep_cc    = CCDeposit.total(now.replace(month=1,day=1), None)
-    ytd_discounts = Purchase.discounts(now.replace(month=1,day=1), None)
-    ytd_fees      = Purchase.fees(now.replace(month=1,day=1), None)
+    ytd_sales     = Purchase.total(start=now.replace(month=1,day=1), end=None)
+    ytd_profit    = PurchaseLineItem.profit_on_sales(start=now.replace(month=1,day=1), end=None)
+    ytd_lost      = Inventory.total(start=now.replace(month=1,day=1), end=None)
+    ytd_dep       = Deposit.total(start=now.replace(month=1,day=1), end=None)
+    ytd_dep_cash  = CashDeposit.total(start=now.replace(month=1,day=1), end=None)
+    ytd_dep_btc   = BTCDeposit.total(start=now.replace(month=1,day=1), end=None)
+    ytd_dep_cc    = CCDeposit.total(start=now.replace(month=1,day=1), end=None)
+    ytd_discounts = Purchase.discounts(start=now.replace(month=1,day=1), end=None)
+    ytd_fees      = Purchase.fees(start=now.replace(month=1,day=1), end=None)
     ytd_users     = Purchase.distinct(distinct_on=Event.user_id, start=now.replace(month=1, day=1))
     ytd_new_users = User.get_number_new_users(start=now.replace(month=1, day=1))
 
-    mtd_sales     = Purchase.total(now.replace(day=1), None)
-    mtd_profit    = PurchaseLineItem.profit_on_sales(now.replace(day=1), None)
-    mtd_lost      = Inventory.total(now.replace(day=1), None)
-    mtd_dep       = Deposit.total(now.replace(day=1), None)
-    mtd_dep_cash  = CashDeposit.total(now.replace(day=1), None)
-    mtd_dep_btc   = BTCDeposit.total(now.replace(day=1), None)
-    mtd_dep_cc    = CCDeposit.total(now.replace(day=1), None)
-    mtd_discounts = Purchase.discounts(now.replace(day=1), None)
-    mtd_fees      = Purchase.fees(now.replace(day=1), None)
+    mtd_sales     = Purchase.total(start=now.replace(day=1), end=None)
+    mtd_profit    = PurchaseLineItem.profit_on_sales(start=now.replace(day=1), end=None)
+    mtd_lost      = Inventory.total(start=now.replace(day=1), end=None)
+    mtd_dep       = Deposit.total(start=now.replace(day=1), end=None)
+    mtd_dep_cash  = CashDeposit.total(start=now.replace(day=1), end=None)
+    mtd_dep_btc   = BTCDeposit.total(start=now.replace(day=1), end=None)
+    mtd_dep_cc    = CCDeposit.total(start=now.replace(day=1), end=None)
+    mtd_discounts = Purchase.discounts(start=now.replace(day=1), end=None)
+    mtd_fees      = Purchase.fees(start=now.replace(day=1), end=None)
     mtd_users     = Purchase.distinct(distinct_on=Event.user_id, start=now.replace(day=1))
     mtd_new_users = User.get_number_new_users(start=now.replace(day=1))
 
@@ -468,32 +485,18 @@ def admin_dashboard(request):
 
 
     def metrics_per_time(start, end):
-
-
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
-        print("JFKDLHFKJSDKJFDSFDSKJNFKJn")
         print(Transaction.get_balance("restock", account.get_cash_account("chezbetty"), start=start, end=end))
 
         return {
-            "sales":      Purchase.total(start, end),
-            "profit":     PurchaseLineItem.profit_on_sales(start, end),
-            "lost":       Inventory.total(start, end),
-            "dep":        Deposit.total(start, end),
-            "dep_cash":   CashDeposit.total(start, end),
-            "dep_btc":    BTCDeposit.total(start, end),
-            "dep_cc":     CCDeposit.total(start, end),
-            "discounts":  Purchase.discounts(start, end),
-            "fees":       Purchase.fees(start, end),
+            "sales":      Purchase.total(start=start, end=end),
+            "profit":     PurchaseLineItem.profit_on_sales(start=start, end=end),
+            "lost":       Inventory.total(start=start, end=end),
+            "dep":        Deposit.total(start=start, end=end),
+            "dep_cash":   CashDeposit.total(start=start, end=end),
+            "dep_btc":    BTCDeposit.total(start=start, end=end),
+            "dep_cc":     CCDeposit.total(start=start, end=end),
+            "discounts":  Purchase.discounts(start=start, end=end),
+            "fees":       Purchase.fees(start=start, end=end),
             "users":      Purchase.distinct(distinct_on=Event.user_id, start=start, end=end),
             "new_users":  User.get_number_new_users(start=start, end=end),
             "cashbox_lost": Transaction.get_balance("lost", account.get_cash_account("cashbox"), start=start, end=end).balance,
@@ -2215,6 +2218,7 @@ def admin_reimbursees_reimbursement_submit(request):
     try:
         reimbursee = Reimbursee.from_id(int(request.POST['reimbursee']))
         amount = Decimal(request.POST['amount'])
+        notes = request.POST['notes']
 
         # Check that we are not trying to reimburse too much
         if amount > reimbursee.balance:
@@ -2238,7 +2242,7 @@ def admin_reimbursees_reimbursement_submit(request):
             # Could not parse date
             event_date = None
 
-        e = datalayer.add_reimbursement(amount, reimbursee, request.user, event_date)
+        e = datalayer.add_reimbursement(amount, notes, reimbursee, request.user, event_date)
 
         request.session.flash('Reimbursement recorded successfully', 'success')
         return HTTPFound(location=request.route_url('admin_event', event_id=e.id))

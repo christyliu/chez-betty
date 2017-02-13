@@ -21,9 +21,6 @@ def datefilter_one_or_zero(label=None):
                 business_hours_only=False, evening_hours_only=False, latenight_hours_only=False,
                 ugos_closed_hours=False,
                 **kwargs):
-            print(args)
-            print(kwargs)
-            print("&" * 100)
             r = fn_being_decorated(*args, **kwargs)
 
             if start:
@@ -547,6 +544,15 @@ def __lifetime_discounts(self):
             .filter(event.Event.deleted==False).one().f or Decimal(0.0)
 user.User.lifetime_discounts = __lifetime_discounts
 
+# This is in a stupid place due to circular input problems
+@property
+def __number_of_purchases(self):
+    return object_session(self).query(func.count(Purchase.id).label("c"))\
+            .join(event.Event)\
+            .filter(Purchase.fr_account_virt_id == self.id)\
+            .filter(event.Event.type == 'purchase')\
+            .filter(event.Event.deleted==False).one().c or 0
+user.User.number_of_purchases = __number_of_purchases
 
 @property
 def __relevant_cash_deposits(self):

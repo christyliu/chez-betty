@@ -56,12 +56,15 @@
           Reimbursee:
           <select class="form-control" id="reimbursee" name="reimbursee">
             {% for reimbursee in reimbursees %}
-            <option value="{{ reimbursee.id }}">{{ reimbursee.name }}</option>
+            <option value="{{ reimbursee.id }}" data-amount="{{ reimbursee.balance }}">{{ reimbursee.name }}</option>
             {% endfor %}
           </select>
 
           Amount:
           <input type="text" class="form-control" id="reimbursement-amount" name="amount">
+
+          Notes:
+          <input type="text" class="form-control" id="reimbursement-notes" name="notes">
 
           <div>
             Set custom time for this reimbursement or leave blank to use current time:<br />
